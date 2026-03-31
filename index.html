@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LexQuiz · Derecho Constitucional</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:  #0D2B5E;
+    --blue:  #1565C0;
+    --sky:   #1E88E5;
+    --lb:    #BBDEFB;
+    --ice:   #E3F2FD;
+    --gold:  #F9A825;
+    --teal:  #00838F;
+    --green: #2E7D32;
+    --red:   #C62828;
+    --white: #FFFFFF;
+    --gray:  #455A64;
+    --opt-a: #1565C0;
+    --opt-b: #00838F;
+    --opt-c: #6A1B9A;
+    --opt-d: #E65100;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--navy);
+    min-height: 100vh;
+    color: var(--white);
+    overflow-x: hidden;
+  }
+
+  /* ── PARTÍCULAS BG ── */
+  #bg {
+    position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+  }
+  .particle {
+    position: absolute; border-radius: 50%;
+    background: rgba(30,136,229,0.08);
+    animation: float linear infinite;
+  }
+  @keyframes float {
+    from { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    to   { transform: translateY(-20vh) rotate(360deg); opacity: 0; }
+  }
+
+  /* ── WRAPPER ── */
+  #app {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+
+  /* ── LOGO ── */
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px; font-weight: 700; letter-spacing: 4px;
+    color: var(--sky); text-transform: uppercase;
+    margin-bottom: 8px; opacity: .7;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; width: 100%; max-width: 760px; animation: fadeIn .4s ease; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+
+  /* ── INTRO ── */
+  .intro-card {
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 20px;
+    padding: 48px 40px;
+    text-align: center;
+    backdrop-filter: blur(12px);
+    width: 100%;
+  }
+  .intro-card h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(26px,4vw,40px); font-weight: 800;
+    line-height: 1.15; margin-bottom: 16px;
+  }
+  .intro-card h1 span { color: var(--sky); }
+  .intro-card p {
+    color: var(--lb); font-size: 15px; line-height: 1.7;
+    max-width: 520px; margin: 0 auto 28px;
+  }
+  .meta-row {
+    display: flex; justify-content: center; gap: 24px; flex-wrap: wrap;
+    margin-bottom: 32px;
+  }
+  .meta-pill {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 20px; padding: 6px 16px;
+    font-size: 13px; color: var(--lb);
+  }
+  .meta-pill strong { color: var(--white); }
+
+  .name-input {
+    width: 100%; max-width: 380px;
+    background: rgba(255,255,255,.08);
+    border: 1.5px solid rgba(255,255,255,.2);
+    border-radius: 12px; padding: 14px 20px;
+    font-family: 'DM Sans', sans-serif; font-size: 16px;
+    color: var(--white); outline: none;
+    transition: border-color .2s;
+    margin-bottom: 20px;
+  }
+  .name-input::placeholder { color: rgba(255,255,255,.35); }
+  .name-input:focus { border-color: var(--sky); }
+
+  .btn-start {
+    background: var(--sky);
+    color: var(--white);
+    border: none; border-radius: 12px;
+    padding: 15px 48px;
+    font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700;
+    cursor: pointer; letter-spacing: 1px;
+    transition: transform .15s, box-shadow .15s;
+    box-shadow: 0 4px 24px rgba(30,136,229,.4);
+  }
+  .btn-start:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(30,136,229,.5); }
+  .btn-start:active { transform: translateY(0); }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap { width: 100%; margin-bottom: 16px; }
+  .progress-bar-bg {
+    height: 6px; background: rgba(255,255,255,.1);
+    border-radius: 3px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%; background: var(--sky);
+    border-radius: 3px;
+    transition: width .4s ease;
+  }
+  .progress-label {
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: rgba(255,255,255,.4);
+    margin-top: 6px;
+  }
+
+  /* ── TIMER ── */
+  .timer-ring {
+    width: 72px; height: 72px;
+    position: relative; margin: 0 auto 20px;
+  }
+  .timer-ring svg { transform: rotate(-90deg); }
+  .timer-ring circle {
+    fill: none; stroke-width: 5;
+  }
+  .timer-track { stroke: rgba(255,255,255,.1); }
+  .timer-fill {
+    stroke: var(--sky);
+    stroke-dasharray: 188;
+    stroke-dashoffset: 0;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear, stroke .5s;
+  }
+  .timer-num {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800;
+  }
+
+  /* ── QUESTION CARD ── */
+  .q-card {
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 20px; padding: 32px 36px;
+    width: 100%; margin-bottom: 20px;
+    backdrop-filter: blur(10px);
+  }
+  .q-num {
+    font-size: 11px; font-weight: 600; letter-spacing: 3px;
+    color: var(--sky); text-transform: uppercase; margin-bottom: 10px;
+  }
+  .q-text {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(16px,2.5vw,20px); font-weight: 700;
+    line-height: 1.4; color: var(--white);
+  }
+
+  /* ── OPTIONS ── */
+  .options-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px; width: 100%;
+  }
+  @media (max-width:560px) { .options-grid { grid-template-columns: 1fr; } }
+
+  .opt-btn {
+    background: rgba(255,255,255,.07);
+    border: 1.5px solid rgba(255,255,255,.12);
+    border-radius: 14px; padding: 16px 20px;
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer;
+    transition: transform .15s, background .2s, border-color .2s;
+    text-align: left;
+  }
+  .opt-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    background: rgba(255,255,255,.13);
+    border-color: rgba(255,255,255,.3);
+  }
+  .opt-btn:disabled { cursor: default; }
+
+  .opt-letter {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 14px;
+    flex-shrink: 0;
+    transition: background .2s;
+  }
+  .opt-a .opt-letter { background: var(--opt-a); }
+  .opt-b .opt-letter { background: var(--opt-b); }
+  .opt-c .opt-letter { background: var(--opt-c); }
+  .opt-d .opt-letter { background: var(--opt-d); }
+
+  .opt-text { font-size: 14px; line-height: 1.45; color: var(--lb); font-weight: 400; }
+
+  .opt-btn.correct {
+    background: rgba(46,125,50,.35);
+    border-color: #66BB6A;
+  }
+  .opt-btn.correct .opt-letter { background: var(--green); }
+  .opt-btn.wrong {
+    background: rgba(198,40,40,.25);
+    border-color: #EF5350;
+  }
+  .opt-btn.wrong .opt-letter { background: var(--red); }
+  .opt-btn.reveal-correct {
+    background: rgba(46,125,50,.2);
+    border-color: rgba(102,187,106,.5);
+  }
+
+  /* ── FEEDBACK ── */
+  .feedback-box {
+    width: 100%; border-radius: 14px; padding: 16px 20px;
+    font-size: 14px; line-height: 1.6;
+    display: none; animation: fadeIn .3s;
+  }
+  .feedback-box.show { display: block; }
+  .feedback-box.fb-correct { background: rgba(46,125,50,.25); border: 1px solid rgba(102,187,106,.4); }
+  .feedback-box.fb-wrong   { background: rgba(198,40,40,.2);  border: 1px solid rgba(239,83,80,.35); }
+  .feedback-box.fb-timeout { background: rgba(249,168,37,.15); border: 1px solid rgba(249,168,37,.4); }
+  .fb-title { font-weight: 600; margin-bottom: 4px; }
+  .fb-exp   { color: rgba(255,255,255,.7); }
+
+  /* ── NEXT BTN ── */
+  .btn-next {
+    background: var(--navy);
+    border: 1.5px solid var(--sky);
+    color: var(--sky);
+    border-radius: 10px; padding: 11px 32px;
+    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+    cursor: pointer; margin-top: 14px;
+    transition: background .2s, color .2s;
+    letter-spacing: .5px;
+  }
+  .btn-next:hover { background: var(--sky); color: var(--white); }
+
+  /* ── SCOREBOARD ── */
+  .score-card {
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 20px; padding: 40px 36px;
+    width: 100%; text-align: center;
+    backdrop-filter: blur(12px);
+  }
+  .score-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px; font-weight: 800; margin-bottom: 6px;
+  }
+  .score-sub { color: var(--lb); font-size: 14px; margin-bottom: 28px; }
+
+  .score-big {
+    font-family: 'Syne', sans-serif;
+    font-size: 72px; font-weight: 800; line-height: 1;
+    color: var(--sky); margin-bottom: 4px;
+  }
+  .score-of { font-size: 16px; color: var(--lb); margin-bottom: 24px; }
+
+  .stat-row {
+    display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+  .stat-box {
+    background: rgba(255,255,255,.07);
+    border-radius: 12px; padding: 14px 22px; min-width: 110px;
+  }
+  .stat-val { font-family:'Syne',sans-serif; font-size:24px; font-weight:800; }
+  .stat-lbl { font-size:11px; color:var(--lb); margin-top:2px; letter-spacing:.5px; }
+
+  .ranking-title {
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    letter-spacing: 3px; color: var(--sky); text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .ranking-list { width: 100%; max-width: 420px; margin: 0 auto 28px; }
+  .rank-row {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(255,255,255,.05);
+    border-radius: 10px; padding: 10px 16px; margin-bottom: 8px;
+  }
+  .rank-pos {
+    font-family:'Syne',sans-serif; font-weight:800; font-size:16px;
+    width:26px; text-align:center; flex-shrink:0;
+  }
+  .rank-pos.gold   { color: #FFD700; }
+  .rank-pos.silver { color: #C0C0C0; }
+  .rank-pos.bronze { color: #CD7F32; }
+  .rank-name { flex:1; font-size:14px; }
+  .rank-pts {
+    font-family:'Syne',sans-serif; font-weight:700; font-size:15px; color:var(--sky);
+  }
+  .rank-you { border: 1px solid var(--sky); }
+
+  .sending-msg { color: var(--lb); font-size:13px; margin-bottom:12px; }
+
+  .btn-restart {
+    background: var(--sky); color: var(--white);
+    border: none; border-radius: 12px; padding: 13px 36px;
+    font-family:'Syne',sans-serif; font-size:15px; font-weight:700;
+    cursor:pointer; letter-spacing:.5px; margin-top:8px;
+    transition: transform .15s, box-shadow .15s;
+    box-shadow: 0 4px 20px rgba(30,136,229,.35);
+  }
+  .btn-restart:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(30,136,229,.45); }
+</style>
+</head>
+<body>
+
+<div id="bg"></div>
+
+<div id="app">
+  <div class="logo">LexQuiz</div>
+
+  <!-- ══ SCREEN: INTRO ══ -->
+  <div class="screen active" id="s-intro">
+    <div class="intro-card">
+      <h1>Jerarquía, Supremacía<br>y <span>Reformas Constitucionales</span></h1>
+      <p>10 preguntas · 60 segundos por pregunta · Los resultados se guardan automáticamente en el registro de la cátedra.</p>
+      <div class="meta-row">
+        <div class="meta-pill"><strong>10</strong> preguntas</div>
+        <div class="meta-pill"><strong>60 seg</strong> por pregunta</div>
+        <div class="meta-pill">Semanas <strong>2 y 3</strong></div>
+      </div>
+      <input class="name-input" id="nameInput" type="text" placeholder="Tu apellido y nombre completo" maxlength="60" />
+      <br>
+      <button class="btn-start" onclick="startQuiz()">COMENZAR</button>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: QUESTION ══ -->
+  <div class="screen" id="s-question">
+    <div class="progress-wrap">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+      </div>
+      <div class="progress-label">
+        <span id="progressLabel">Pregunta 1 de 10</span>
+        <span id="scoreLabel">0 pts</span>
+      </div>
+    </div>
+
+    <div class="timer-ring">
+      <svg width="72" height="72" viewBox="0 0 72 72">
+        <circle class="timer-track" cx="36" cy="36" r="30"/>
+        <circle class="timer-fill" id="timerCircle" cx="36" cy="36" r="30"/>
+      </svg>
+      <div class="timer-num" id="timerNum">60</div>
+    </div>
+
+    <div class="q-card">
+      <div class="q-num" id="qNum">PREGUNTA 1</div>
+      <div class="q-text" id="qText"></div>
+    </div>
+
+    <div class="options-grid" id="optionsGrid"></div>
+
+    <div class="feedback-box" id="feedbackBox">
+      <div class="fb-title" id="fbTitle"></div>
+      <div class="fb-exp"   id="fbExp"></div>
+    </div>
+
+    <button class="btn-next" id="btnNext" style="display:none" onclick="nextQuestion()">
+      Siguiente →
+    </button>
+  </div>
+
+  <!-- ══ SCREEN: RESULTS ══ -->
+  <div class="screen" id="s-results">
+    <div class="score-card">
+      <div class="score-title">¡Terminaste el quiz!</div>
+      <div class="score-sub" id="playerNameResult"></div>
+      <div class="score-big" id="finalScore">0</div>
+      <div class="score-of" id="scoreOf">de 1000 puntos posibles</div>
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="stat-val" id="statCorrect">0</div>
+          <div class="stat-lbl">CORRECTAS</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="statWrong">0</div>
+          <div class="stat-lbl">INCORRECTAS</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="statTime">0s</div>
+          <div class="stat-lbl">TIEMPO PROMEDIO</div>
+        </div>
+      </div>
+      <div class="ranking-title">Ranking de la clase</div>
+      <div class="ranking-list" id="rankingList">
+        <div class="sending-msg" id="sendingMsg">Enviando resultados...</div>
+      </div>
+      <button class="btn-restart" onclick="restartQuiz()">Jugar de nuevo</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══ CONFIGURACIÓN ══════════════════════════════════════════════
+// Reemplazá esta URL con la de tu Google Apps Script deployment
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzt3jxSIBYg7wJFj32SHFvr5s_5b0llDPcC8sTiHGYo5sQ9MJ5sRY8xkkid9WfPETxxXg/exec";
+
+const TIME_PER_Q = 60;
+const MAX_PTS_PER_Q = 100;
+
+// ══ PREGUNTAS ══════════════════════════════════════════════════
+const questions = [
+  {
+    q: "¿Cuál es la norma que consagra el principio de supremacía constitucional en la Constitución Nacional argentina?",
+    opts: ["Art. 14 CN", "Art. 28 CN", "Art. 31 CN", "Art. 75 inc. 22 CN"],
+    correct: 2,
+    exp: "El art. 31 CN establece que la Constitución, las leyes nacionales dictadas en su consecuencia y los tratados son la ley suprema de la Nación. Es la base positiva del principio de supremacía."
+  },
+  {
+    q: "¿Qué característica de la Constitución Nacional argentina la distingue de una constitución 'flexible'?",
+    opts: [
+      "Que fue sancionada por un Congreso Constituyente",
+      "Que requiere un procedimiento especial para su reforma (art. 30 CN)",
+      "Que tiene más de 100 artículos",
+      "Que incorporó tratados internacionales de DDHH"
+    ],
+    correct: 1,
+    exp: "La Constitución argentina es rígida: el art. 30 CN exige que el Congreso declare la necesidad de reforma con 2/3 de sus miembros, y luego una convención constituyente lleva adelante la reforma. Las constituciones flexibles se modifican por el mismo procedimiento que una ley ordinaria."
+  },
+  {
+    q: "El 'bloque de constitucionalidad federal' es un concepto desarrollado por la doctrina argentina para referirse a:",
+    opts: [
+      "Solo el texto de la Constitución Nacional de 1853/60",
+      "La CN más los tratados de integración del art. 75 inc. 24",
+      "La CN más los tratados internacionales de DDHH con jerarquía constitucional (art. 75 inc. 22)",
+      "Todas las leyes federales sancionadas por el Congreso Nacional"
+    ],
+    correct: 2,
+    exp: "El bloque de constitucionalidad federal (Bidart Campos) comprende la CN y los once instrumentos internacionales de DDHH que el art. 75 inc. 22 eleva a jerarquía constitucional. Todos forman el parámetro de validez supremo del ordenamiento argentino."
+  },
+  {
+    q: "¿Cuál es el procedimiento que establece el art. 30 CN para reformar la Constitución Nacional?",
+    opts: [
+      "El Poder Ejecutivo convoca a una consulta popular y el resultado es vinculante",
+      "El Congreso declara la necesidad de reforma con mayoría simple y la reforma se aprueba por referéndum",
+      "El Congreso declara la necesidad de reforma con 2/3 de sus miembros y una convención constituyente realiza la reforma",
+      "La Corte Suprema propone las reformas y el Congreso las aprueba con mayoría de 2/3"
+    ],
+    correct: 2,
+    exp: "Art. 30 CN: la necesidad de reforma debe ser declarada por el Congreso con voto de las 2/3 partes de sus miembros, pero la reforma en sí solo puede ser efectuada por una convención especialmente convocada al efecto. El Congreso declara; la convención reforma."
+  },
+  {
+    q: "¿En qué reforma constitucional se incorporó el art. 14 bis de la Constitución Nacional, que reconoce los derechos de los trabajadores?",
+    opts: ["Reforma de 1853", "Reforma de 1949", "Reforma de 1957", "Reforma de 1994"],
+    correct: 2,
+    exp: "El art. 14 bis fue incorporado en la reforma de 1957, convocada por el gobierno de facto de Aramburu. Reconoce condiciones dignas de trabajo, salario mínimo, igual remuneración por igual tarea, derecho de huelga y protección de la seguridad social."
+  },
+  {
+    q: "¿Cuál fue la principal innovación de la reforma constitucional de 1994 en materia de derechos humanos?",
+    opts: [
+      "Creó la Defensoría del Pueblo como órgano de protección de derechos",
+      "Incorporó el art. 43 que regula el amparo, el hábeas corpus y el hábeas data",
+      "Otorgó jerarquía constitucional a once instrumentos internacionales de DDHH (art. 75 inc. 22)",
+      "Reconoció el derecho al ambiente sano en el art. 41"
+    ],
+    correct: 2,
+    exp: "La principal innovación de 1994 en materia de DDHH fue el art. 75 inc. 22, que otorgó jerarquía constitucional a once tratados internacionales (CADH, PIDCP, PIDESC, Convención sobre el Niño, CEDAW, etc.), ampliando el bloque de constitucionalidad federal."
+  },
+  {
+    q: "¿Qué diferencia existe entre el poder constituyente originario y el poder constituyente derivado?",
+    opts: [
+      "El originario lo ejerce el pueblo directamente; el derivado lo ejerce el Congreso sin convención",
+      "El originario funda el Estado sin límites jurídicos previos; el derivado reforma la CN dentro de los procedimientos que ella misma establece",
+      "El originario solo puede crear la parte dogmática; el derivado solo puede modificar la parte orgánica",
+      "No existe diferencia: ambos son ejercidos por convenciones constituyentes con los mismos poderes"
+    ],
+    correct: 1,
+    exp: "El poder constituyente originario se ejerce en la fundación del Estado, sin sujeción a procedimientos jurídicos preexistentes (caso de 1853). El derivado opera para reformar una constitución ya vigente y está limitado por el procedimiento que la propia constitución establece (art. 30 CN)."
+  },
+  {
+    q: "La reforma constitucional de 1949, sancionada durante el gobierno de Perón, fue posteriormente:",
+    opts: [
+      "Confirmada por la reforma de 1957 como parte del texto constitucional vigente",
+      "Derogada por proclama del gobierno de facto en 1956, lo que generó debate sobre su legitimidad",
+      "Declarada inconstitucional por la Corte Suprema en el fallo 'Siri' de 1957",
+      "Incorporada parcialmente a la reforma de 1994 en lo relativo a derechos sociales"
+    ],
+    correct: 1,
+    exp: "La Constitución de 1949 fue derogada por proclama del gobierno de facto de Aramburu (Decreto-Ley 3.838/56 de 1956), lo que genera debate doctrinal sobre su legitimidad, ya que no siguió el procedimiento del art. 30 CN. La reforma de 1957 restableció la CN de 1853/60 y agregó el art. 14 bis."
+  },
+  {
+    q: "¿Qué establece el art. 28 de la Constitución Nacional y por qué es relevante en el control de constitucionalidad?",
+    opts: [
+      "Prohíbe la doble imposición tributaria entre Nación y provincias",
+      "Establece que los principios, garantías y derechos reconocidos en los artículos anteriores no podrán ser alterados por las leyes que reglamenten su ejercicio",
+      "Regula el procedimiento de sanción de las leyes por el Congreso",
+      "Fija la competencia originaria de la Corte Suprema de Justicia de la Nación"
+    ],
+    correct: 1,
+    exp: "El art. 28 CN es el fundamento del test de razonabilidad: las leyes pueden reglamentar los derechos constitucionales, pero no pueden 'alterarlos'. Si una ley vacía de contenido un derecho o lo suprime en los hechos, viola el art. 28 CN y es inconstitucional. Es la base del control de razonabilidad que la CSJN aplica en casos como Ercolano."
+  },
+  {
+    q: "¿Cuál fue la reforma constitucional que incorporó la figura del Jefe de Gabinete de Ministros y redujo el mandato presidencial de 6 a 4 años?",
+    opts: ["Reforma de 1898", "Reforma de 1957", "Reforma de 1972", "Reforma de 1994"],
+    correct: 3,
+    exp: "La reforma de 1994 (Pacto de Olivos) creó el Jefe de Gabinete (art. 100 CN), redujo el mandato presidencial a 4 años con posibilidad de una reelección consecutiva, incorporó el tercer senador por minoría y constitucionaliz el Ministerio Público (art. 120), entre otras innovaciones."
+  }
+];
+
+// ══ ESTADO ════════════════════════════════════════════════════
+let playerName = "";
+let currentQ = 0;
+let score = 0;
+let correctCount = 0;
+let timers = [];
+let questionStartTime = 0;
+let totalTime = 0;
+let answered = false;
+let timerInterval = null;
+let timeLeft = TIME_PER_Q;
+let allScores = [];
+
+// ══ PARTÍCULAS ════════════════════════════════════════════════
+function initParticles() {
+  const bg = document.getElementById('bg');
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 60 + 20;
+    p.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      animation-duration:${Math.random()*20+15}s;
+      animation-delay:${Math.random()*15}s;
+      opacity:${Math.random()*0.4+0.05};
+    `;
+    bg.appendChild(p);
+  }
+}
+
+// ══ PANTALLAS ════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ══ INICIO ═══════════════════════════════════════════════════
+function startQuiz() {
+  const val = document.getElementById('nameInput').value.trim();
+  if (!val) {
+    document.getElementById('nameInput').focus();
+    document.getElementById('nameInput').style.borderColor = '#EF5350';
+    setTimeout(() => document.getElementById('nameInput').style.borderColor = '', 1500);
+    return;
+  }
+  playerName = val;
+  currentQ = 0; score = 0; correctCount = 0; totalTime = 0;
+  showScreen('s-question');
+  loadQuestion();
+}
+
+// ══ CARGAR PREGUNTA ═══════════════════════════════════════════
+function loadQuestion() {
+  answered = false;
+  clearInterval(timerInterval);
+  timeLeft = TIME_PER_Q;
+
+  const q = questions[currentQ];
+  const pct = (currentQ / questions.length) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `Pregunta ${currentQ+1} de ${questions.length}`;
+  document.getElementById('scoreLabel').textContent = `${score} pts`;
+  document.getElementById('qNum').textContent = `PREGUNTA ${currentQ+1}`;
+  document.getElementById('qText').textContent = q.q;
+
+  // Timer ring
+  const circle = document.getElementById('timerCircle');
+  const circumference = 188;
+  circle.style.strokeDashoffset = 0;
+  circle.style.stroke = 'var(--sky)';
+  document.getElementById('timerNum').textContent = TIME_PER_Q;
+
+  // Opciones
+  const grid = document.getElementById('optionsGrid');
+  grid.innerHTML = '';
+  const letters = ['A','B','C','D'];
+  const classes = ['opt-a','opt-b','opt-c','opt-d'];
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = `opt-btn ${classes[i]}`;
+    btn.innerHTML = `
+      <div class="opt-letter">${letters[i]}</div>
+      <div class="opt-text">${opt}</div>
+    `;
+    btn.onclick = () => selectAnswer(i);
+    grid.appendChild(btn);
+  });
+
+  // Feedback + next
+  const fb = document.getElementById('feedbackBox');
+  fb.className = 'feedback-box';
+  fb.querySelector('#fbTitle').textContent = '';
+  fb.querySelector('#fbExp').textContent = '';
+  document.getElementById('btnNext').style.display = 'none';
+
+  // Iniciar timer
+  questionStartTime = Date.now();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById('timerNum').textContent = timeLeft;
+    const offset = circumference * (1 - timeLeft / TIME_PER_Q);
+    circle.style.strokeDashoffset = offset;
+    if (timeLeft <= 10) circle.style.stroke = '#EF5350';
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      if (!answered) timeoutAnswer();
+    }
+  }, 1000);
+}
+
+// ══ SELECCIÓN ════════════════════════════════════════════════
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+
+  const elapsed = (Date.now() - questionStartTime) / 1000;
+  totalTime += elapsed;
+
+  const q = questions[currentQ];
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach(b => b.disabled = true);
+
+  const pts = idx === q.correct
+    ? Math.round(MAX_PTS_PER_Q * (timeLeft / TIME_PER_Q) * 0.7 + MAX_PTS_PER_Q * 0.3)
+    : 0;
+
+  if (idx === q.correct) {
+    btns[idx].classList.add('correct');
+    score += pts;
+    correctCount++;
+    showFeedback('correct', `✓ ¡Correcto! +${pts} puntos`, q.exp);
+  } else {
+    btns[idx].classList.add('wrong');
+    btns[q.correct].classList.add('reveal-correct');
+    showFeedback('wrong', `✗ Incorrecto. La respuesta correcta era: ${['A','B','C','D'][q.correct]}`, q.exp);
+  }
+
+  document.getElementById('scoreLabel').textContent = `${score} pts`;
+  document.getElementById('btnNext').style.display = 'inline-block';
+}
+
+// ══ TIMEOUT ══════════════════════════════════════════════════
+function timeoutAnswer() {
+  answered = true;
+  const q = questions[currentQ];
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach(b => b.disabled = true);
+  btns[q.correct].classList.add('reveal-correct');
+  showFeedback('timeout', '⏱ Tiempo agotado. La respuesta correcta era: ' + ['A','B','C','D'][q.correct], q.exp);
+  document.getElementById('btnNext').style.display = 'inline-block';
+}
+
+// ══ FEEDBACK ════════════════════════════════════════════════
+function showFeedback(type, title, exp) {
+  const fb = document.getElementById('feedbackBox');
+  fb.className = `feedback-box fb-${type} show`;
+  document.getElementById('fbTitle').textContent = title;
+  document.getElementById('fbExp').textContent  = exp;
+}
+
+// ══ SIGUIENTE ════════════════════════════════════════════════
+function nextQuestion() {
+  currentQ++;
+  if (currentQ < questions.length) {
+    loadQuestion();
+  } else {
+    showResults();
+  }
+}
+
+// ══ RESULTADOS ═══════════════════════════════════════════════
+function showResults() {
+  clearInterval(timerInterval);
+  showScreen('s-results');
+
+  const maxPts = questions.length * MAX_PTS_PER_Q;
+  const avgTime = correctCount > 0 ? (totalTime / questions.length).toFixed(1) : 0;
+
+  document.getElementById('playerNameResult').textContent = playerName;
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('scoreOf').textContent = `de ${maxPts} puntos posibles`;
+  document.getElementById('statCorrect').textContent = correctCount;
+  document.getElementById('statWrong').textContent = questions.length - correctCount;
+  document.getElementById('statTime').textContent = avgTime + 's';
+
+  sendResults();
+}
+
+// ══ ENVIAR A APPS SCRIPT ════════════════════════════════════
+async function sendResults() {
+  const payload = {
+    nombre: playerName,
+    puntaje: score,
+    correctas: correctCount,
+    incorrectas: questions.length - correctCount,
+    total: questions.length,
+    fecha: new Date().toLocaleString('es-AR'),
+    materia: "Derecho Constitucional - Semanas 2 y 3"
+  };
+
+  try {
+    const resp = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    // Guardar localmente y mostrar ranking
+    saveLocalScore(playerName, score);
+    renderRanking();
+  } catch (e) {
+    saveLocalScore(playerName, score);
+    renderRanking();
+  }
+}
+
+// ══ RANKING LOCAL (sessionStorage) ══════════════════════════
+function saveLocalScore(name, pts) {
+  let scores = JSON.parse(sessionStorage.getItem('lexquiz_scores') || '[]');
+  // Actualizar si ya existe
+  const idx = scores.findIndex(s => s.name === name);
+  if (idx >= 0) { if (pts > scores[idx].pts) scores[idx].pts = pts; }
+  else scores.push({ name, pts });
+  scores.sort((a,b) => b.pts - a.pts);
+  sessionStorage.setItem('lexquiz_scores', JSON.stringify(scores));
+  allScores = scores;
+}
+
+function renderRanking() {
+  const list = document.getElementById('rankingList');
+  document.getElementById('sendingMsg').style.display = 'none';
+  let scores = JSON.parse(sessionStorage.getItem('lexquiz_scores') || '[]');
+  if (!scores.length) { list.innerHTML = '<p style="color:var(--lb);font-size:13px">Sin datos de otros participantes todavía.</p>'; return; }
+
+  const medals = ['gold','silver','bronze'];
+  list.innerHTML = scores.slice(0,10).map((s,i) => `
+    <div class="rank-row ${s.name === playerName ? 'rank-you' : ''}">
+      <div class="rank-pos ${medals[i]||''}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div>
+      <div class="rank-name">${s.name}${s.name===playerName?' <span style="color:var(--sky);font-size:11px">(vos)</span>':''}</div>
+      <div class="rank-pts">${s.pts} pts</div>
+    </div>
+  `).join('');
+}
+
+// ══ REINICIAR ════════════════════════════════════════════════
+function restartQuiz() {
+  currentQ = 0; score = 0; correctCount = 0; totalTime = 0;
+  document.getElementById('nameInput').value = '';
+  showScreen('s-intro');
+}
+
+// ══ INIT ═════════════════════════════════════════════════════
+initParticles();
+</script>
+</body>
+</html>
